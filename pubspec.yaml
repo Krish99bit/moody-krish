@@ -1,0 +1,39 @@
+name: moody_krish
+description: Moody Krish - Premium offline music player built with Flutter, SQLite, and audio_service.
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Audio Playback & Background Service
+  just_audio: ^0.9.36
+  audio_service: ^0.18.12
+  audio_session: ^0.1.19
+
+  # Local Database & Storage
+  sqflite: ^2.3.2
+  path_provider: ^2.1.2
+  path: ^1.9.0
+  shared_preferences: ^2.2.2
+
+  # File Import & Permissions
+  file_picker: ^8.0.0
+  permission_handler: ^11.3.0
+
+  # State Management & Helpers
+  provider: ^6.1.2
+  intl: ^0.19.0
+  cupertino_icons: ^1.0.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
