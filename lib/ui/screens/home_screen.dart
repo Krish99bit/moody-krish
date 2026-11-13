@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/library_provider.dart';
 import '../../providers/music_provider.dart';
 import '../../providers/playlist_provider.dart';
+import '../../providers/theme_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/artwork_widget.dart';
 import '../widgets/song_tile.dart';
@@ -31,11 +32,29 @@ class HomeScreen extends StatelessWidget {
     final library = context.watch<LibraryProvider>();
     final music = context.watch<MusicProvider>();
     final playlistProvider = context.watch<PlaylistProvider>();
+    final themeProvider = context.watch<ThemeProvider>();
 
     return Scaffold(
       appBar: AppBar(
         title: Text(_getGreeting()),
         actions: [
+          // 1. Quick Shuffle All Songs from AppBar
+          IconButton(
+            tooltip: 'Shuffle All Songs',
+            icon: const Icon(Icons.shuffle_rounded, color: AppTheme.primary, size: 24),
+            onPressed: () => _shuffleAllSongs(context, library, music),
+          ),
+          // 2. Dark / Light Mode Toggle
+          IconButton(
+            tooltip: themeProvider.isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode',
+            icon: Icon(
+              themeProvider.isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+              color: themeProvider.isDarkMode ? Colors.amber : const Color(0xFF1DB954),
+              size: 24,
+            ),
+            onPressed: () => themeProvider.toggleDarkMode(),
+          ),
+          // 3. Equalizer
           IconButton(
             tooltip: 'Equalizer',
             icon: const Icon(Icons.tune_rounded),
@@ -48,7 +67,7 @@ class HomeScreen extends StatelessWidget {
               );
             },
           ),
-          // Plus (+) Icon on Home Screen
+          // 4. Plus (+) Icon on Home Screen
           IconButton(
             tooltip: 'Add / Create',
             icon: const Icon(Icons.add_circle_outline_rounded, color: AppTheme.primary, size: 26),
@@ -107,6 +126,73 @@ class HomeScreen extends StatelessWidget {
                   ],
                 ),
               ),
+
+              // 2. Prominent Quick Shuffle All Vault Banner
+              if (library.allSongs.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () => _shuffleAllSongs(context, library, music),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF006450), Color(0xFF1DB954)],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF1DB954).withOpacity(0.3),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: const BoxDecoration(
+                                color: Colors.black26,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.shuffle_rounded, color: Colors.white, size: 22),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Shuffle All Songs',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Play all ${library.allSongs.length} tracks in smart shuffle order',
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.play_circle_fill_rounded, color: Colors.white, size: 36),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
 
               // Empty Library Welcome
               if (library.allSongs.isEmpty && !library.isLoading)
@@ -386,6 +472,22 @@ class HomeScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _shuffleAllSongs(BuildContext context, LibraryProvider library, MusicProvider music) {
+    if (library.allSongs.isEmpty) {
+      _showSnackbar(context, 'No songs in your library yet! Tap + to add songs.');
+      return;
+    }
+    final shuffled = List<Song>.from(library.allSongs)..shuffle();
+    music.playSong(shuffled.first, contextQueue: shuffled);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Shuffling ${shuffled.length} tracks from your vault!'),
+        backgroundColor: AppTheme.primary,
+        duration: const Duration(seconds: 2),
       ),
     );
   }

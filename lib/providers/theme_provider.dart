@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../data/models/playback_state.dart';
+import '../ui/theme/app_theme.dart';
 
 class ThemeProvider extends ChangeNotifier {
   AppColorTheme _currentTheme = AppColorTheme.spotifyGreen;
+  bool _isDarkMode = true;
 
   AppColorTheme get currentTheme => _currentTheme;
+  bool get isDarkMode => _isDarkMode;
 
   ThemeProvider() {
     _loadTheme();
@@ -14,9 +17,31 @@ class ThemeProvider extends ChangeNotifier {
   Future<void> _loadTheme() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      _isDarkMode = prefs.getBool('is_dark_mode') ?? true;
+      AppTheme.isDarkMode = _isDarkMode;
       final index = prefs.getInt('app_theme_index') ?? 0;
       _currentTheme = AppColorTheme.values[index.clamp(0, AppColorTheme.values.length - 1)];
       notifyListeners();
+    } catch (_) {}
+  }
+
+  Future<void> toggleDarkMode() async {
+    _isDarkMode = !_isDarkMode;
+    AppTheme.isDarkMode = _isDarkMode;
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('is_dark_mode', _isDarkMode);
+    } catch (_) {}
+  }
+
+  Future<void> setDarkMode(bool isDark) async {
+    _isDarkMode = isDark;
+    AppTheme.isDarkMode = _isDarkMode;
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('is_dark_mode', _isDarkMode);
     } catch (_) {}
   }
 
@@ -43,6 +68,7 @@ class ThemeProvider extends ChangeNotifier {
   }
 
   Color get backgroundColor {
+    if (!_isDarkMode) return const Color(0xFFF7F9FC);
     switch (_currentTheme) {
       case AppColorTheme.spotifyGreen:
         return const Color(0xFF121212);
@@ -56,6 +82,7 @@ class ThemeProvider extends ChangeNotifier {
   }
 
   Color get surfaceColor {
+    if (!_isDarkMode) return Colors.white;
     switch (_currentTheme) {
       case AppColorTheme.spotifyGreen:
         return const Color(0xFF181818);
@@ -69,6 +96,7 @@ class ThemeProvider extends ChangeNotifier {
   }
 
   Color get surfaceElevatedColor {
+    if (!_isDarkMode) return const Color(0xFFEEF1F6);
     switch (_currentTheme) {
       case AppColorTheme.spotifyGreen:
         return const Color(0xFF242424);
@@ -82,6 +110,15 @@ class ThemeProvider extends ChangeNotifier {
   }
 
   ThemeData get themeData {
+    if (!_isDarkMode) {
+      return AppTheme.lightTheme.copyWith(
+        primaryColor: primaryColor,
+        colorScheme: AppTheme.lightTheme.colorScheme.copyWith(
+          primary: primaryColor,
+          secondary: primaryColor,
+        ),
+      );
+    }
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
